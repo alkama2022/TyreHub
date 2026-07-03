@@ -24,24 +24,24 @@ class Brand(models.Model):
     class Meta:
         ordering = ['name']        
 
-class TyreCategory(models.Model):
+class ProductCategory(models.Model):
     name = models.CharField(max_length=100)  # SUV, Sedan, Truck, Motorcycle
     slug = models.SlugField(unique=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)
-        super().save(*args, **kwargs)
+    # def save(self, *args, **kwargs):
+    #     if not self.slug:
+    #         self.slug = slugify(self.name)
+    #     super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
 
 
-class Tyre(models.Model):
+class Product(models.Model):
     brand = models.ForeignKey(Brand,on_delete=models.PROTECT,related_name="tyres")
-    category = models.ForeignKey(TyreCategory,on_delete=models.PROTECT,related_name="tyres")
+    category = models.ForeignKey(ProductCategory,on_delete=models.PROTECT,related_name="tyres")
     model_name = models.CharField(max_length=150)
     width = models.PositiveIntegerField()          # 205
     aspect_ratio = models.PositiveIntegerField()   # 55
@@ -53,6 +53,7 @@ class Tyre(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
     discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     description = models.TextField(blank=True)
+    inventory = models.PositiveIntegerField(validators=[MinValueValidator(0)])
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -71,12 +72,12 @@ class Tyre(models.Model):
         if self.discount_price and self.discount_price > self.price:
             raise ValueError("Discount price cannot be greater than price")
 
-class TyreImage(models.Model):
-    tyre = models.ForeignKey(Tyre,on_delete=models.CASCADE,related_name="images")
-    image = models.ImageField(upload_to="tyres/", blank=True, null=True)
+class ProductImage(models.Model):
+    product = models.ForeignKey(Product,on_delete=models.CASCADE,related_name="images")
+    image = models.ImageField(upload_to="products/", blank=True, null=True)
     is_primary = models.BooleanField(default=False)
     def __str__(self):
-        return f"Image of {self.tyre.model_name}"
+        return f"Image of {self.product.model_name}"
       
 from django.db import models
 
@@ -124,7 +125,7 @@ class Order(models.Model):
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Tyre, on_delete=models.CASCADE,related_name='orderitems')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE,related_name='orderitems')
     quantity = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
   
@@ -132,9 +133,7 @@ class OrderItem(models.Model):
 class Address(models.Model):
     street = models.CharField(max_length=255)
     city = models.CharField(max_length=255)
-    zip_code = models.CharField(max_length=20)
-    country = models.CharField(max_length=255)
-    customer = models.OneToOneField(Customer, on_delete=models.CASCADE)
+    customer = models.OneToOneField(Customer, on_delete=models.CASCADE,primary_key=True)
 
 class Cart(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid4)
@@ -142,14 +141,14 @@ class Cart(models.Model):
 
 class CartItem(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
-    product = models.ForeignKey(Tyre, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
     
     class Meta:
         unique_together =[['cart','product']]
 
 class Review(models.Model):
-    product = models.ForeignKey(Tyre, on_delete=models.CASCADE, related_name='reviews')
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
     name = models.CharField(max_length=255)
     description = models.TextField()
     date = models.DateTimeField(auto_now_add=True)

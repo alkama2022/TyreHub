@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (
-    Brand, TyreCategory, Tyre, TyreImage,
+    Brand, ProductCategory, Product, ProductImage,
     Customer, Order, OrderItem,
     Address, Cart, CartItem, Review
 )
@@ -17,10 +17,10 @@ class BrandAdmin(admin.ModelAdmin):
 
 
 # =========================
-# TYRE CATEGORY
+# PRODUCT CATEGORY
 # =========================
-@admin.register(TyreCategory)
-class TyreCategoryAdmin(admin.ModelAdmin):
+@admin.register(ProductCategory)
+class ProductCategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'created_at')
     search_fields = ('name',)
     prepopulated_fields = {'slug': ('name',)}
@@ -28,18 +28,18 @@ class TyreCategoryAdmin(admin.ModelAdmin):
 
 
 # =========================
-# TYRE IMAGE INLINE
+# PRODUCT IMAGE INLINE
 # =========================
-class TyreImageInline(admin.TabularInline):
-    model = TyreImage
+class ProductImageInline(admin.TabularInline):
+    model = ProductImage
     extra = 1
 
 
 # =========================
-# TYRE
+# PRODUCT
 # =========================
-@admin.register(Tyre)
-class TyreAdmin(admin.ModelAdmin):
+@admin.register(Product)
+class ProductAdmin(admin.ModelAdmin):
     list_display = (
         'brand', 'model_name', 'category',
         'width', 'aspect_ratio', 'rim_diameter',
@@ -54,7 +54,7 @@ class TyreAdmin(admin.ModelAdmin):
     search_fields = ('model_name', 'brand__name')
     ordering = ('-created_at',)
 
-    inlines = [TyreImageInline]
+    inlines = [ProductImageInline]
 
     list_editable = ('price', 'discount_price', 'is_active')
 
@@ -78,7 +78,7 @@ class CustomerAdmin(admin.ModelAdmin):
 # =========================
 @admin.register(Address)
 class AddressAdmin(admin.ModelAdmin):
-    list_display = ('street', 'city', 'country', 'customer')
+    list_display = ('street', 'city', 'customer')
     search_fields = ('street', 'city', 'customer__user__first_name')
 
 
