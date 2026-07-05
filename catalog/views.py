@@ -1,14 +1,16 @@
+from django.db.models import Count
 
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin,DestroyModelMixin, UpdateModelMixin
 from rest_framework.response import Response
 from rest_framework.filters import SearchFilter, OrderingFilter
 
-
+from django.http import HttpResponse
 
 from django_filters.rest_framework import DjangoFilterBackend
 from . import models
 from . import serializers
+from . import permissions
 from .filters import ProductFilter
 from .pagination import CustomPageNumberPagination
 
@@ -20,6 +22,7 @@ class ProductViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend,SearchFilter, OrderingFilter]
     filterset_class = ProductFilter
     pagination_class = CustomPageNumberPagination
+    permission_classes = [permissions.IsAdminOrReadOnly]
     search_fields = ['model_name','description','brand__name','category__name','width']
     ordering_fields = ['price', 'model_name']
 
@@ -42,7 +45,8 @@ class ProductViewSet(ModelViewSet):
         return super().destroy(request, *args, **kwargs)
     
 class ProductCategoryViewSet(ModelViewSet):
-    queryset = models.ProductCategory.objects.all()
+    permission_classes = [permissions.IsAdminOrReadOnly]
+    queryset = models.ProductCategory.objects.annotate(products_count=Count('tyres')).all()
     serializer_class = serializers.ProductCategorySerializer
     
     def get_serializer_context(self):
@@ -88,4 +92,6 @@ class CartItemViewSet(ModelViewSet):
     
     def get_queryset(self):
         return models.CartItem.objects.filter(cart_id=self.kwargs['cart_pk']).select_related('product')
-    
+
+
+# class OrderViewSet()

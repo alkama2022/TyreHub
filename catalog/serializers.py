@@ -21,9 +21,10 @@ class BrandSerializer(serializers.ModelSerializer):
         fields = ['id','name']
 
 class ProductCategorySerializer(serializers.ModelSerializer):
+    products_count = serializers.IntegerField(read_only = True)
     class Meta:
         model = models.ProductCategory
-        fields = ['id','name']  
+        fields = ['id','name','products_count']  
         
           
 class ReviewSerializer(serializers.ModelSerializer):
@@ -87,3 +88,15 @@ class UpdateCartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.CartItem
         fields = ['quantity']
+
+
+
+
+
+
+
+class OrderSerializer(serializers.ModelSerializer):
+#   items = OrderItemSerialize(many=True)
+  class Meta:
+    model = models.Order
+    fields = ['id','customer','placed_at','payment_status']
