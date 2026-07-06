@@ -8,7 +8,7 @@ from uuid import uuid4
 
 class Brand(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    logo = models.ImageField(upload_to="brands/", blank=True, null=True)
+    logo = models.ImageField(upload_to="store/brands", blank=True, null=True)
     slug = models.SlugField(unique=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -70,7 +70,7 @@ class Product(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product,on_delete=models.CASCADE,related_name="images")
-    image = models.ImageField(upload_to="products/", blank=True, null=True)
+    image = models.ImageField(upload_to="store/images", blank=True, null=True)
     is_primary = models.BooleanField(default=False)
     def __str__(self):
         return f"Image of {self.product.model_name}"
@@ -148,3 +148,26 @@ class Review(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
     date = models.DateTimeField(auto_now_add=True)
+    
+
+class SentCartMessage(models.Model):
+    session_key = models.CharField(max_length=40,null=True,blank=True)
+    contact_name = models.CharField(max_length=50,blank=True)
+    contact_phone = models.CharField(max_length=50,blank=True)
+    contact_email = models.EmailField(blank=True)
+    contact_note = models.TextField(blank=True)
+    
+    #snapshot of cart at the time of sending
+    
+    items_snapshot = models.JSONField(help_text="List of {product_name, quantity , parice} at sending time")
+    total_price = models.DecimalField(max_digits=10,decimal_places=2)
+    message_text = models.TextField(help_text="Exact message sent to the shop owner")
+    whatsapp_url = models.URLField(blank=True,help_text="Generate click-to-chat URL")
+    sent_via = models.CharField(max_length=20,choices=[('whatsapp','WhatsApp'),('sms','SMS')],default='whatsapp')
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True,blank=True)
+    
+    def __str__(self):
+        return f'Message {self.id} at {self.created_at}'
+    

@@ -9,6 +9,7 @@ router.register(r'products', views.ProductViewSet, basename='product')
 router.register(r'productsCategories', views.ProductCategoryViewSet, basename='category')
 router.register(r'productsBrand', views.BrandViewSet, basename='brand')
 router.register(r'cart', views.CartViewSet, basename='cart')
+router.register(r'messages',views.SentCartMessageViewSet,basename='message')
 
 # Nested routers
 product_router = nested_routers.NestedDefaultRouter(
@@ -30,6 +31,11 @@ product_router.register(
     views.ReviewViewSet,
     basename='product-reviews'
 )
+product_router.register(
+    r'images',
+    views.ProductImageViewSet,
+    basename='product-images'
+)
 
 nested_cart_router.register(
     r'items',
@@ -40,5 +46,3 @@ nested_cart_router.register(
 
 
 urlpatterns = router.urls + product_router.urls + nested_cart_router.urls
-
-

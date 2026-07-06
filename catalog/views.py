@@ -5,7 +5,6 @@ from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin,DestroyMo
 from rest_framework.response import Response
 from rest_framework.filters import SearchFilter, OrderingFilter
 
-from django.http import HttpResponse
 
 from django_filters.rest_framework import DjangoFilterBackend
 from . import models
@@ -17,7 +16,7 @@ from .pagination import CustomPageNumberPagination
 
 
 class ProductViewSet(ModelViewSet):
-    queryset = models.Product.objects.all()
+    queryset = models.Product.objects.prefetch_related('images').select_related('category','brand').all()
     serializer_class = serializers.ProductSerializer
     filter_backends = [DjangoFilterBackend,SearchFilter, OrderingFilter]
     filterset_class = ProductFilter
@@ -69,7 +68,9 @@ class ReviewViewSet(ModelViewSet):
 
 
 class BrandViewSet(ModelViewSet):
-    queryset = models.Brand.objects.all()
+    permission_classes = [permissions.IsAdminOrReadOnly]
+    pagination_class = CustomPageNumberPagination
+    queryset = models.Brand.objects.prefetch_related('tyres').annotate(products_count=Count('tyres')).all()
     serializer_class = serializers.BrandSerializer
     
     
@@ -93,5 +94,17 @@ class CartItemViewSet(ModelViewSet):
     def get_queryset(self):
         return models.CartItem.objects.filter(cart_id=self.kwargs['cart_pk']).select_related('product')
 
+class ProductImageViewSet(ModelViewSet):
+    def get_queryset(self):
+        return models.ProductImage.objects.filter(product_id=self.kwargs['product_pk'])
+   
+    serializer_class = serializers.ProductImageSerializer
+    
+    def get_serializer_context(self):
+        return {'product_id':self.kwargs['product_pk']}
 
-# class OrderViewSet()
+
+
+class SentCartMessageViewSet(ModelViewSet):
+    queryset = models.SentCartMessage.objects.all()
+    serializer_class = serializers.SentCartMessageSerializer

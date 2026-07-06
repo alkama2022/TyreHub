@@ -142,6 +142,9 @@ USE_TZ = True
 
 STATIC_URL = 'static/'
 
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR,'media')
+
 AUTH_USER_MODEL = 'core.User'
 
 REST_FRAMEWORK = {
@@ -172,3 +175,6 @@ SIMPLE_JWT = {
 DJOSER = {
     'current_user' : 'core.serializers.UserSerializer'
 }
+
+# settings.py
+SHOP_OWNER_WHATSAPP_NUMBER = '2348126573474'

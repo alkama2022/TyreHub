@@ -7,18 +7,30 @@ class SimpleProductSerializer(serializers.ModelSerializer):
         model = models.Product
         fields = ['id','model_name','price']
 
+class ProductImageSerializer(serializers.ModelSerializer):
+    
+    def create(self, validated_data):
+        product_id = self.context['product_id']
+        return models.ProductImage.objects.create(product_id=product_id, **validated_data)
+    
+    class Meta:
+        model = models.ProductImage
+        fields = ['id','image','is_primary']
+
 class ProductSerializer(serializers.ModelSerializer):
+    images = ProductImageSerializer(many=True,read_only=True)
     class Meta:
         model = models.Product
-        fields = ['id','brand','category','model_name','width','aspect_ratio','rim_diameter','load_index','speed_rating','price','description','inventory']
+        fields = ['id','brand','category','model_name','width','aspect_ratio','rim_diameter','load_index','speed_rating','price','description','inventory','images']
     
     brand = serializers.StringRelatedField()
     category = serializers.StringRelatedField()
 
 class BrandSerializer(serializers.ModelSerializer):
+    products_count = serializers.IntegerField(read_only = True)
     class Meta:
         model = models.Brand
-        fields = ['id','name']
+        fields = ['id','name','products_count']
 
 class ProductCategorySerializer(serializers.ModelSerializer):
     products_count = serializers.IntegerField(read_only = True)
@@ -100,3 +112,23 @@ class OrderSerializer(serializers.ModelSerializer):
   class Meta:
     model = models.Order
     fields = ['id','customer','placed_at','payment_status']
+
+
+class SentCartMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.SentCartMessage
+        fields = [
+            'id',
+            'contact_name',
+            'contact_phone',
+            'contact_email',
+            'contact_note',
+            'items_snapshot',
+            'total_price',
+            'message_text',
+            'whatsapp_url',
+            'sent_via',
+            'created_at',
+            'ip_address',
+        ]
+        #read_only_fields = fields   # all fields are read-only (no creation/update via API)
