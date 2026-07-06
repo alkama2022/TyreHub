@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Test WhatsApp Integration</title>
+    <style>
+      body {
+        font-family: Arial;
+        margin: 40px;
+      }
+      button {
+        padding: 10px 20px;
+        margin: 10px;
+        font-size: 16px;
+      }
+      pre {
+        background: #f5f5f5;
+        padding: 15px;
+        border-radius: 5px;
+      }
+      .result {
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🧪 Test WhatsApp Cart Integration</h1>
+
+    <div>
+      <button onclick="addToCart(1, 2)">Add Product 1 (x2)</button>
+      <button onclick="addToCart(2, 1)">Add Product 2 (x1)</button>
+      <button onclick="viewCart()">View Cart</button>
+      <button onclick="sendToWhatsApp()">📱 Send to WhatsApp</button>
+    </div>
+
+    <div class="result">
+      <h3>Response:</h3>
+      <pre id="response">Click buttons to test...</pre>
+    </div>
+
+    <div id="whatsapp-link" style="display: none; margin-top: 20px">
+      <h3>📱 WhatsApp Link Ready:</h3>
+      <a
+        id="wa-link"
+        href="#"
+        target="_blank"
+        style="color: green; font-size: 18px"
+      >
+        Click here to open WhatsApp
+      </a>
+    </div>
+
+    <script>
+      const BASE_URL = "http://localhost:8000/api";
+
+      async function apiCall(endpoint, method = "GET", body = null) {
+        const options = {
+          method: method,
+          headers: { "Content-Type": "application/json" },
+          credentials: "include", // Important for session cookies
+        };
+        if (body) options.body = JSON.stringify(body);
+
+        const response = await fetch(`${BASE_URL}${endpoint}`, options);
+        const data = await response.json();
+        document.getElementById("response").textContent = JSON.stringify(
+          data,
+          null,
+          2,
+        );
+        return data;
+      }
+
+      async function addToCart(productId, quantity) {
+        await apiCall("/cart/items/", "POST", {
+          product: productId,
+          quantity: quantity,
+        });
+      }
+
+      async function viewCart() {
+        await apiCall("/cart/");
+      }
+
+      async function sendToWhatsApp() {
+        const data = await apiCall("/cart/send/", "POST", {
+          name: "Test Customer",
+          phone: "+2348123456789",
+          email: "test@example.com",
+          note: "Test order from HTML page",
+        });
+
+        if (data.whatsapp_url) {
+          document.getElementById("whatsapp-link").style.display = "block";
+          document.getElementById("wa-link").href = data.whatsapp_url;
+          // Auto-open WhatsApp (comment out if you want manual click)
+          window.open(data.whatsapp_url, "_blank");
+        }
+      }
+    </script>
+  </body>
+</html>
