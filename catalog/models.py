@@ -13,12 +13,25 @@ class Brand(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            slug = slugify(self.name)
+            unique_slug = slug
+            counter = 1
+
+            while Brand.objects.filter(slug=unique_slug).exclude(pk=self.pk).exists():
+                unique_slug = f"{slug}-{counter}"
+                counter += 1
+
+            self.slug = unique_slug
+
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
 
     class Meta:
-        ordering = ['name']        
+        ordering = ["name"]     
 
 class ProductCategory(models.Model):
     name = models.CharField(max_length=100)  # SUV, Sedan, Truck, Motorcycle
@@ -39,34 +52,43 @@ class Product(models.Model):
     brand = models.ForeignKey(Brand,on_delete=models.PROTECT,related_name="tyres")
     category = models.ForeignKey(ProductCategory,on_delete=models.PROTECT,related_name="tyres")
     model_name = models.CharField(max_length=150)
-    width = models.PositiveIntegerField()          # 205
-    aspect_ratio = models.PositiveIntegerField()   # 55
-    rim_diameter = models.PositiveIntegerField()   # 16
+    tire_size = models.CharField(max_length=17)
 
     load_index = models.PositiveIntegerField()
     speed_rating = models.CharField(max_length=2)  # H, V
 
-    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(0)])
-    discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    price = models.DecimalField(max_digits=10, decimal_places=2, validators=[MinValueValidator(1)])
     description = models.TextField(blank=True)
     inventory = models.PositiveIntegerField(validators=[MinValueValidator(0)])
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    # class Meta:
+    #     indexes = [
+    #             models.Index(fields=["tire_size"]),
+    #             models.Index(fields=["is_active"]),
+    #             models.Index(fields=["price"]),
+    #             models.Index(fields=["created_at"]),
+    #              ]
+        
+    #     constraints = [
+    #             models.UniqueConstraint(
+    #                    fields=["brand", "model_name", "tire_size"],
+    #                    name="unique_product"
+    #                                   )
+    #                   ]
+        #   ordering = ["-created_at"]
     class Meta:
-        indexes = [
-            models.Index(fields=["width", "aspect_ratio", "rim_diameter"]),
-        ]
-        unique_together = ("brand", "model_name", "width", "rim_diameter")
+        unique_together = ("brand", "model_name","tire_size")
 
-    def __str__(self):
-        return f"{self.brand.name} {self.model_name} {self.width}/{self.aspect_ratio}R{self.rim_diameter}"
+    # def __str__(self):
+    #     return f"{self.brand.name} {self.model_name} {self.width}/{self.aspect_ratio}R{self.rim_diameter}"
 
-    def clean(self):
-        """Business rule validation"""
-        if self.discount_price and self.discount_price > self.price:
-            raise ValueError("Discount price cannot be greater than price")
+    # def clean(self):
+    #     """Business rule validation"""
+    #     if self.discount_price and self.discount_price > self.price:
+    #         raise ValueError("Discount price cannot be greater than price")
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product,on_delete=models.CASCADE,related_name="images")
@@ -74,8 +96,9 @@ class ProductImage(models.Model):
     is_primary = models.BooleanField(default=False)
     def __str__(self):
         return f"Image of {self.product.model_name}"
-      
-from django.db import models
+    
+    # class Meta:
+    #     ordering = ["-is_primary", "id"]
 
 
         
@@ -124,12 +147,20 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE,related_name='orderitems')
     quantity = models.PositiveIntegerField()
     unit_price = models.DecimalField(max_digits=10, decimal_places=2)
+    
+    class Meta:
+        indexes = [
+               models.Index(fields=["order"]),
+               models.Index(fields=["product"]),
+                  ]
   
   
 class Address(models.Model):
     street = models.CharField(max_length=255)
     city = models.CharField(max_length=255)
     customer = models.OneToOneField(Customer, on_delete=models.CASCADE,primary_key=True)
+    # customer = models.ForeignKey(Customer, on_delete=models.CASCADE)
+    # is_default = models.BooleanField(default=False)
 
 class Cart(models.Model):
     id = models.UUIDField(primary_key=True,default=uuid4)
@@ -140,7 +171,14 @@ class CartItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.PositiveSmallIntegerField(validators=[MinValueValidator(1)])
     
+    
     class Meta:
+        # constraints = [
+        #           models.UniqueConstraint(
+        #                        fields=["cart", "product"],
+        #                        name="unique_cart_product"
+        #                                  )
+        #              ]
         unique_together =[['cart','product']]
 
 class Review(models.Model):
@@ -148,12 +186,13 @@ class Review(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField()
     date = models.DateTimeField(auto_now_add=True)
+    # rating = models.PositiveSmallIntegerField()
     
 
 class SentCartMessage(models.Model):
-    session_key = models.CharField(max_length=40,null=True,blank=True)
-    contact_name = models.CharField(max_length=50,blank=True)
-    contact_phone = models.CharField(max_length=50,blank=True)
+    session_key = models.CharField(max_length=255,null=True,blank=True)
+    contact_name = models.CharField(max_length=255,blank=True)
+    contact_phone = models.CharField(max_length=15,blank=True)
     contact_email = models.EmailField(blank=True)
     contact_note = models.TextField(blank=True)
     
@@ -162,10 +201,15 @@ class SentCartMessage(models.Model):
     items_snapshot = models.JSONField(help_text="List of {product_name, quantity , parice} at sending time")
     total_price = models.DecimalField(max_digits=10,decimal_places=2)
     message_text = models.TextField(help_text="Exact message sent to the shop owner")
-    whatsapp_url = models.URLField(blank=True,help_text="Generate click-to-chat URL")
+    whatsapp_url = models.URLField(
+    max_length=2000,
+    blank=True,
+    help_text="Generate click-to-chat URL"
+)
     sent_via = models.CharField(max_length=20,choices=[('whatsapp','WhatsApp'),('sms','SMS')],default='whatsapp')
     
     created_at = models.DateTimeField(auto_now_add=True)
+    # created_at = models.DateTimeField(auto_now_add=True,db_index=True)
     ip_address = models.GenericIPAddressField(null=True,blank=True)
     
     def __str__(self):

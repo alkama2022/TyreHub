@@ -28,7 +28,6 @@ SECRET_KEY = 'django-insecure-494rbcb$e0ebezy3otrp%#2l3-kfdx%^ip%oj=816ov4fbu*%r
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -40,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    "debug_toolbar",
+    'corsheaders',
+    'debug_toolbar',
     'rest_framework',
     'djoser',
     'django_filters',
@@ -49,10 +49,14 @@ INSTALLED_APPS = [
     'tags',
     'likes',
     # 'store_custom',
+    
+    # "django.contrib.postgres",
 ]
 
 MIDDLEWARE = [
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
+    'corsheaders.middleware.CorsMiddleware',  # ← must be at the TOP
+    
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -148,33 +152,52 @@ MEDIA_ROOT = os.path.join(BASE_DIR,'media')
 AUTH_USER_MODEL = 'core.User'
 
 REST_FRAMEWORK = {
-    # 'DEFAULT_AUTHENTICATION_CLASSES': [
-    #     'rest_framework.authentication.SessionAuthentication',
-    #     'rest_framework.authentication.BasicAuthentication',
-    # ],
-    # 'DEFAULT_PERMISSION_CLASSES': [
-    #     'rest_framework.permissions.IsAuthenticatedOrReadOnly',
-    # ],
-    # 'DEFAULT_FILTER_BACKENDS': [
-    #     'django_filters.rest_framework.DjangoFilterBackend'
-    # ]
-    
-    'COERCE_DECIMAL_TO_STRING': False,
-    'DEFAULT_AUTHENTICATION_CLASSES': (
+'COERCE_DECIMAL_TO_STRING': False,
+'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
    
     ),
-    
+"DEFAULT_THROTTLE_CLASSES":[
+"rest_framework.throttling.AnonRateThrottle",
+"rest_framework.throttling.UserRateThrottle",
+],
+
+"DEFAULT_THROTTLE_RATES":{
+"anon":"100/day",
+"user":"1000/day"
 }
+
+}
+# REST_FRAMEWORK = {
+    
+    
+
+    
+# }
 SIMPLE_JWT = {
    'AUTH_HEADER_TYPES': ('JWT',),
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     
 }
 
+# SIMPLE_JWT = {
+#     "AUTH_HEADER_TYPES": ("Bearer",),
+#     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
+# }
+
 DJOSER = {
     'current_user' : 'core.serializers.UserSerializer'
 }
 
 # settings.py
-SHOP_OWNER_WHATSAPP_NUMBER = '2348126573474'
+SHOP_OWNER_WHATSAPP_NUMBER = '238039366958'
+WHATSAPP_NUMBER = '238039366958'
+
+ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]

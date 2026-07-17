@@ -5,6 +5,7 @@ from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin,DestroyMo
 from rest_framework.response import Response
 from rest_framework.filters import SearchFilter, OrderingFilter
 
+from rest_framework.permissions import AllowAny,IsAdminUser
 
 from django_filters.rest_framework import DjangoFilterBackend
 from . import models
@@ -14,7 +15,6 @@ from .filters import ProductFilter
 from .pagination import CustomPageNumberPagination
 
 
-
 class ProductViewSet(ModelViewSet):
     queryset = models.Product.objects.prefetch_related('images').select_related('category','brand').all()
     serializer_class = serializers.ProductSerializer
@@ -22,26 +22,19 @@ class ProductViewSet(ModelViewSet):
     filterset_class = ProductFilter
     pagination_class = CustomPageNumberPagination
     permission_classes = [permissions.IsAdminOrReadOnly]
-    search_fields = ['model_name','description','brand__name','category__name','width']
+    search_fields = ['model_name','description','brand__name','category__name']
     ordering_fields = ['price', 'model_name']
 
     def get_serializer_context(self):
         return {'request' : self.request}
     
-    serializer_class = serializers.ProductSerializer
-    filter_backends = [DjangoFilterBackend,SearchFilter, OrderingFilter]
-    filterset_class = ProductFilter
-    pagination_class = CustomPageNumberPagination
-    search_fields = ['model_name','description','brand__name','category__name','width']
-    ordering_fields = ['price', 'model_name']
-
-    def get_serializer_context(self):
-        return {'request' : self.request}
     
     def destroy(self, request, *args, **kwargs):
-        if models.OrderItem.objects.filter(product_id=kwargs['pk']).count() > 0:
+        if models.OrderItem.objects.filter(product_id=kwargs['pk']).exists():
             return Response({"Error" : "Product Cannot be deleted becouse it is associated order items"})
         return super().destroy(request, *args, **kwargs)
+    
+    
     
 class ProductCategoryViewSet(ModelViewSet):
     permission_classes = [permissions.IsAdminOrReadOnly]
@@ -52,14 +45,14 @@ class ProductCategoryViewSet(ModelViewSet):
         return {'request' : self.request}
     
     def destroy(self, request, *args, **kwargs):
-        if models.Product.objects.filter(category_id=kwargs['pk']).count() > 0:
+        if models.Product.objects.filter(category_id=kwargs['pk']).exists():
             return Response({"Error" : "Category Cannot be deleted becouse it is associated with products"})
         return super().destroy(request, *args, **kwargs)
     
     
 class ReviewViewSet(ModelViewSet):
     def get_queryset(self):
-        return models.Review.objects.filter(product_id=self.kwargs['product_pk'])
+        return models.Review.objects.filter(product_id=self.kwargs['product_pk']).order_by("-date")
     serializer_class = serializers.ReviewSerializer
     
     def get_serializer_context(self):
@@ -70,12 +63,22 @@ class ReviewViewSet(ModelViewSet):
 class BrandViewSet(ModelViewSet):
     permission_classes = [permissions.IsAdminOrReadOnly]
     pagination_class = CustomPageNumberPagination
+    # queryset = models.Brand.objects.annotate(products_count=Count('tyres'))
     queryset = models.Brand.objects.prefetch_related('tyres').annotate(products_count=Count('tyres')).all()
     serializer_class = serializers.BrandSerializer
     
     
 
 class CartViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin,  GenericViewSet):
+    # from django.db.models import Prefetch
+    # queryset = models.Cart.objects.prefetch_related(
+           # Prefetch(
+               # "items",
+               # queryset=models.CartItem.objects.select_related(
+                             # "product"
+                             # )
+                  # )
+                  # )
     queryset = models.Cart.objects.prefetch_related('items__product').all()
     serializer_class = serializers.CartSerializer
     
@@ -96,7 +99,10 @@ class CartItemViewSet(ModelViewSet):
 
 class ProductImageViewSet(ModelViewSet):
     def get_queryset(self):
-        return models.ProductImage.objects.filter(product_id=self.kwargs['product_pk'])
+        return models.ProductImage.objects.filter(product_id=self.kwargs['product_pk']).order_by(
+                                                                                                "-is_primary",
+                                                                                                 "id"
+                                                                                                  )
    
     serializer_class = serializers.ProductImageSerializer
     
@@ -105,8 +111,7 @@ class ProductImageViewSet(ModelViewSet):
 
 
 
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.permissions import AllowAny,IsAdminUser
+
 
 class SentCartMessageViewSet(ModelViewSet):
     queryset = models.SentCartMessage.objects.all()

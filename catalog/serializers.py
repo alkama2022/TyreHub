@@ -1,11 +1,39 @@
 from rest_framework import serializers
+from django.db.models import F, Sum
 from . import models
 
 
 class SimpleProductSerializer(serializers.ModelSerializer):
+    brand = serializers.StringRelatedField(read_only=True)
+    image = serializers.SerializerMethodField()
+
+    def get_image(self, obj):
+        primary = obj.images.filter(is_primary=True).first() or obj.images.first()
+        if not primary or not primary.image:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(primary.image.url)
+        return primary.image.url
+
     class Meta:
         model = models.Product
-        fields = ['id','model_name','price']
+        fields = ['id', 'model_name', 'price', 'brand', 'tire_size', 'image']
+
+
+
+# class SimpleProductSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = models.Product
+#         fields = ['id','model_name','price']
+        
+# class SimpleProductSerializer(serializers.ModelSerializer):
+#     brand = serializers.StringRelatedField(read_only=True)
+
+#     class Meta:
+#         model = models.Product
+#         fields = ['id', 'model_name', 'price', 'brand', 'tire_size', 'images']
+
 
 class ProductImageSerializer(serializers.ModelSerializer):
     
@@ -17,20 +45,67 @@ class ProductImageSerializer(serializers.ModelSerializer):
         model = models.ProductImage
         fields = ['id','image','is_primary']
 
+
+
 class ProductSerializer(serializers.ModelSerializer):
-    images = ProductImageSerializer(many=True,read_only=True)
+    images = ProductImageSerializer(many=True, read_only=True)
+
+    brand = serializers.StringRelatedField(read_only=True)
+    category = serializers.StringRelatedField(read_only=True)
+
+    brand_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.Brand.objects.all(),
+        source='brand',
+        write_only=True
+    )
+
+    category_id = serializers.PrimaryKeyRelatedField(
+        queryset=models.ProductCategory.objects.all(),
+        source='category',
+        write_only=True
+    )
+
     class Meta:
         model = models.Product
-        fields = ['id','brand','category','model_name','width','aspect_ratio','rim_diameter','load_index','speed_rating','price','description','inventory','images']
-    
-    brand = serializers.StringRelatedField()
-    category = serializers.StringRelatedField()
+        fields = [
+            'id',
+            'brand',
+            'category',
+            'brand_id',
+            'category_id',
+            'model_name',
+            'tire_size',
+            'load_index',
+            'speed_rating',
+            'price',
+            'description',
+            'inventory',
+            'images',
+        ]
+
+
+
+# class ProductSerializer(serializers.ModelSerializer):
+#     images = ProductImageSerializer(many=True, read_only=True)
+#     brand = serializers.StringRelatedField(read_only=True)
+#     category = serializers.StringRelatedField(read_only=True)
+
+#     class Meta:
+#         model = models.Product
+#         fields = [
+#             'id', 'brand', 'category',
+#             'brand_id', 'category_id',
+#             'model_name',  'tire_size',
+#             'load_index', 'speed_rating', 'price', 'description',
+#             'inventory', 'images',
+#         ]
+
 
 class BrandSerializer(serializers.ModelSerializer):
     products_count = serializers.IntegerField(read_only = True)
     class Meta:
         model = models.Brand
-        fields = ['id','name','products_count']
+        fields = ['id','name','products_count','logo']
 
 class ProductCategorySerializer(serializers.ModelSerializer):
     products_count = serializers.IntegerField(read_only = True)
@@ -89,6 +164,9 @@ class CartSerializer(serializers.ModelSerializer):
     total_price = serializers.SerializerMethodField()
     
     def get_total_price(self, obj):
+        # CartItem.objects.filter(cart=cart).aggregate(
+        #                        total=Sum(F("quantity") * F("product__price"))
+        #                        )
         return sum(item.product.price * item.quantity for item in obj.items.all())
     class Meta:
         model = models.Cart

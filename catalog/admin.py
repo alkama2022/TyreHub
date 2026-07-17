@@ -22,8 +22,6 @@ from .models import (
 # Inlines
 # ---------------------------------------------------------------------------
 
-from django.contrib import admin
-from django.utils.html import format_html
 
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
@@ -33,9 +31,12 @@ class ProductImageInline(admin.TabularInline):
     readonly_fields = ("thumbnail",)
 
     def thumbnail(self, obj):
-        if obj.image.name != '':
-            return format_html(f'<img src="{obj.image.url}">')
-        return ''
+        if obj.image:
+            return format_html(
+            f'<img src="{obj.image.url}" width="100" />',
+            obj.image.url,
+        )
+        return "No image"
 
 class OrderItemInline(admin.TabularInline):
     model = OrderItem
@@ -146,11 +147,10 @@ class ProductAdmin(admin.ModelAdmin):
         "category",
         "size",
         "price",
-        "discount_price",
         "inventory",
         "is_active",
     ]
-    list_editable = ["price", "discount_price", "is_active"]
+    list_editable = ["price", "is_active"]
     list_filter = ["is_active", "brand", "category", InventoryFilter]
     search_fields = ["model_name", "brand__name"]
     autocomplete_fields = ["brand", "category"]
@@ -160,16 +160,15 @@ class ProductAdmin(admin.ModelAdmin):
 
     fieldsets = (
         ("Basic info", {
-            "fields": ("brand", "category", "model_name", "is_active")
+            "fields": ("brand", "category", "model_name","tire_size", "is_active")
         }),
         ("Specifications", {
             "fields": (
-                ("width", "aspect_ratio", "rim_diameter"),
                 ("load_index", "speed_rating"),
             )
         }),
         ("Pricing & stock", {
-            "fields": ("price", "discount_price", "inventory")
+            "fields": ("price", "inventory")
         }),
         ("Details", {
             "fields": ("description",)
@@ -182,7 +181,7 @@ class ProductAdmin(admin.ModelAdmin):
 
     @admin.display(description="Size")
     def size(self, obj):
-        return f"{obj.width}/{obj.aspect_ratio}R{obj.rim_diameter}"
+        return obj.tire_size
 
 
 @admin.register(ProductImage)
