@@ -51,10 +51,11 @@ INSTALLED_APPS = [
     'django_filters',
     'catalog',
     'core',
+    'accounts',   # Audit logging & user activity tracking
     'tags',
     'likes',
     # 'store_custom',
-    
+
     # "django.contrib.postgres",
 ]
 
@@ -128,15 +129,21 @@ DATABASES = {
 
 AUTH_PASSWORD_VALIDATORS = [
     {
+        # Rejects passwords too similar to username, email, first/last name
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'OPTIONS': {'max_similarity': 0.6},
     },
     {
+        # Minimum 10 characters — stronger than Django's default 8
         'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'OPTIONS': {'min_length': 10},
     },
     {
+        # Rejects passwords on the list of 20,000 common passwords
         'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
     },
     {
+        # Rejects passwords that are entirely numeric
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
@@ -200,9 +207,41 @@ DJOSER = {
     'current_user' : 'core.serializers.UserSerializer'
 }
 
-# settings.py
 SHOP_OWNER_WHATSAPP_NUMBER = os.getenv("WHATSAPP_NUMBER", "")
 WHATSAPP_NUMBER = os.getenv("WHATSAPP_NUMBER", "")
+
+
+# ===========================================================================
+# EMAIL CONFIGURATION
+# ===========================================================================
+# Development default: prints emails to console (no SMTP needed)
+# Production: set EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+# in your .env file and provide SMTP credentials.
+
+EMAIL_BACKEND = os.getenv(
+    "EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend",
+)
+EMAIL_HOST = os.getenv("EMAIL_HOST", "smtp.gmail.com")
+EMAIL_PORT = int(os.getenv("EMAIL_PORT", "587"))
+EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS", "True").lower() in ("true", "1", "yes")
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL", "False").lower() in ("true", "1", "yes")
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DEFAULT_FROM_EMAIL",
+    "TyreHub <noreply@tyrehub.com>",
+)
+SERVER_EMAIL = DEFAULT_FROM_EMAIL   # Used for error emails to ADMINS
+
+
+# ===========================================================================
+# AUTHENTICATION REDIRECTS
+# ===========================================================================
+
+LOGIN_URL = "/admin/login/"
+LOGIN_REDIRECT_URL = "/admin/"
+LOGOUT_REDIRECT_URL = "/admin/login/"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
