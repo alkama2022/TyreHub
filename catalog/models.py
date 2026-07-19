@@ -66,6 +66,7 @@ class Product(models.Model):
     
     class Meta:
         indexes = [
+                models.Index(fields=["model_name"]),
                 models.Index(fields=["tire_size"]),
                 models.Index(fields=["is_active"]),
                 models.Index(fields=["price"]),

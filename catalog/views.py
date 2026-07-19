@@ -5,6 +5,8 @@ from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin,DestroyModelMixin, UpdateModelMixin
 from rest_framework.response import Response
 from rest_framework.filters import SearchFilter, OrderingFilter
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
 from rest_framework.permissions import AllowAny,IsAdminUser
 
@@ -44,6 +46,11 @@ class ProductCategoryViewSet(ModelViewSet):
     permission_classes = [permissions.IsAdminOrReadOnly]
     queryset = models.ProductCategory.objects.annotate(products_count=Count('tyres')).all()
     serializer_class = serializers.ProductCategorySerializer
+    pagination_class = CustomPageNumberPagination
+
+    @method_decorator(cache_page(60 * 15))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
     
     def get_serializer_context(self):
         return {'request' : self.request}
@@ -58,6 +65,7 @@ class ProductCategoryViewSet(ModelViewSet):
     
     
 class ReviewViewSet(ModelViewSet):
+    pagination_class = CustomPageNumberPagination
     def get_queryset(self):
         return models.Review.objects.filter(product_id=self.kwargs['product_pk']).order_by("-date")
     serializer_class = serializers.ReviewSerializer
@@ -70,9 +78,12 @@ class ReviewViewSet(ModelViewSet):
 class BrandViewSet(ModelViewSet):
     permission_classes = [permissions.IsAdminOrReadOnly]
     pagination_class = CustomPageNumberPagination
-    # queryset = models.Brand.objects.annotate(products_count=Count('tyres'))
     queryset = models.Brand.objects.annotate(products_count=Count('tyres')).all()
     serializer_class = serializers.BrandSerializer
+    
+    @method_decorator(cache_page(60 * 15))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
     
     
 
@@ -94,6 +105,7 @@ class CartViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin,  Gene
     
 class CartItemViewSet(ModelViewSet):
     http_method_names = ['get','post','patch','delete']
+    pagination_class = CustomPageNumberPagination
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return serializers.AddCartItemSerializer
@@ -114,6 +126,7 @@ class CartItemViewSet(ModelViewSet):
         )
 
 class ProductImageViewSet(ModelViewSet):
+    pagination_class = CustomPageNumberPagination
     def get_queryset(self):
         return models.ProductImage.objects.filter(product_id=self.kwargs['product_pk']).order_by(
                                                                                                 "-is_primary",
@@ -132,6 +145,7 @@ class ProductImageViewSet(ModelViewSet):
 class SentCartMessageViewSet(ModelViewSet):
     queryset = models.SentCartMessage.objects.all()
     serializer_class = serializers.SentCartMessageSerializer
+    pagination_class = CustomPageNumberPagination
 
     def get_permissions(self):
         if self.request.method == "POST":

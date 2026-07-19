@@ -21,13 +21,18 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Load environment variables at startup
 load_dotenv(BASE_DIR / '.env')
 
+# SECURITY WARNING: don't run with debug turned on in production!
+DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() in ("true", "1", "yes")
+
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 if not SECRET_KEY:
-    SECRET_KEY = 'django-insecure-494rbcb$e0ebezy3otrp%#2l3-kfdx%^ip%oj=816ov4fbu*%r'
+    if not DEBUG:
+        import sys
+        print("FATAL: DJANGO_SECRET_KEY environment variable is not set!", file=sys.stderr)
+        sys.exit(1)
+    SECRET_KEY = 'django-insecure-local-dev-only-key-do-not-use-in-prod'
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DJANGO_DEBUG", "True").lower() in ("true", "1", "yes")
 
 
 
@@ -63,6 +68,21 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Security Settings
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+# Production HTTPS security — only activated when DEBUG=False
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000          # 1 year
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+
 
 
 INTERNAL_IPS = [
@@ -147,6 +167,7 @@ AUTH_USER_MODEL = 'core.User'
 
 REST_FRAMEWORK = {
     'COERCE_DECIMAL_TO_STRING': False,
+    'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
@@ -155,8 +176,8 @@ REST_FRAMEWORK = {
         'rest_framework.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '100/day',
-        'user': '1000/day'
+        'anon': '30/min',
+        'user': '300/min'
     },
     'NUM_PROXIES': 1
 }
@@ -167,23 +188,21 @@ REST_FRAMEWORK = {
     
 # }
 SIMPLE_JWT = {
-   'AUTH_HEADER_TYPES': ('JWT',),
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
-    
+    'AUTH_HEADER_TYPES': ('Bearer',),           # Must match frontend Authorization: Bearer <token>
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),  # 1 hour — not 1 day for security
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,
+    "BLACKLIST_AFTER_ROTATION": True,
 }
 
-# SIMPLE_JWT = {
-#     "AUTH_HEADER_TYPES": ("Bearer",),
-#     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
-# }
 
 DJOSER = {
     'current_user' : 'core.serializers.UserSerializer'
 }
 
 # settings.py
-SHOP_OWNER_WHATSAPP_NUMBER = '238039366958'
-WHATSAPP_NUMBER = '238039366958'
+SHOP_OWNER_WHATSAPP_NUMBER = os.getenv("WHATSAPP_NUMBER", "")
+WHATSAPP_NUMBER = os.getenv("WHATSAPP_NUMBER", "")
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 
