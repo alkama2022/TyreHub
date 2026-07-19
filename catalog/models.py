@@ -64,23 +64,23 @@ class Product(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
-    # class Meta:
-    #     indexes = [
-    #             models.Index(fields=["tire_size"]),
-    #             models.Index(fields=["is_active"]),
-    #             models.Index(fields=["price"]),
-    #             models.Index(fields=["created_at"]),
-    #              ]
-        
-    #     constraints = [
-    #             models.UniqueConstraint(
-    #                    fields=["brand", "model_name", "tire_size"],
-    #                    name="unique_product"
-    #                                   )
-    #                   ]
-        #   ordering = ["-created_at"]
     class Meta:
-        unique_together = ("brand", "model_name","tire_size")
+        indexes = [
+                models.Index(fields=["tire_size"]),
+                models.Index(fields=["is_active"]),
+                models.Index(fields=["price"]),
+                models.Index(fields=["created_at"]),
+                 ]
+        
+        constraints = [
+                models.UniqueConstraint(
+                       fields=["brand", "model_name", "tire_size"],
+                       name="unique_product"
+                                      )
+                      ]
+        ordering = ["-created_at"]
+    # class Meta:
+    #     unique_together = ("brand", "model_name","tire_size")
 
     # def __str__(self):
     #     return f"{self.brand.name} {self.model_name} {self.width}/{self.aspect_ratio}R{self.rim_diameter}"
@@ -97,8 +97,8 @@ class ProductImage(models.Model):
     def __str__(self):
         return f"Image of {self.product.model_name}"
     
-    # class Meta:
-    #     ordering = ["-is_primary", "id"]
+    class Meta:
+        ordering = ["-is_primary", "id"]
 
 
         
@@ -173,13 +173,13 @@ class CartItem(models.Model):
     
     
     class Meta:
-        # constraints = [
-        #           models.UniqueConstraint(
-        #                        fields=["cart", "product"],
-        #                        name="unique_cart_product"
-        #                                  )
-        #              ]
-        unique_together =[['cart','product']]
+        constraints = [
+                  models.UniqueConstraint(
+                               fields=["cart", "product"],
+                               name="unique_cart_product"
+                                         )
+                     ]
+        # unique_together =[['cart','product']]
 
 class Review(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='reviews')
@@ -208,8 +208,8 @@ class SentCartMessage(models.Model):
 )
     sent_via = models.CharField(max_length=20,choices=[('whatsapp','WhatsApp'),('sms','SMS')],default='whatsapp')
     
-    created_at = models.DateTimeField(auto_now_add=True)
-    # created_at = models.DateTimeField(auto_now_add=True,db_index=True)
+    # created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True,db_index=True)
     ip_address = models.GenericIPAddressField(null=True,blank=True)
     
     def __str__(self):
