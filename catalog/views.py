@@ -1,5 +1,6 @@
 from django.db.models import Count
 
+from rest_framework import status
 from rest_framework.viewsets import GenericViewSet, ModelViewSet
 from rest_framework.mixins import CreateModelMixin, RetrieveModelMixin,DestroyModelMixin, UpdateModelMixin
 from rest_framework.response import Response
@@ -31,7 +32,10 @@ class ProductViewSet(ModelViewSet):
     
     def destroy(self, request, *args, **kwargs):
         if models.OrderItem.objects.filter(product_id=kwargs['pk']).exists():
-            return Response({"Error" : "Product Cannot be deleted becouse it is associated order items"})
+            return Response(
+                {"detail": "Product cannot be deleted because it is associated with existing order items."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         return super().destroy(request, *args, **kwargs)
     
     
@@ -46,7 +50,10 @@ class ProductCategoryViewSet(ModelViewSet):
     
     def destroy(self, request, *args, **kwargs):
         if models.Product.objects.filter(category_id=kwargs['pk']).exists():
-            return Response({"Error" : "Category Cannot be deleted becouse it is associated with products"})
+            return Response(
+                {"detail": "Category cannot be deleted because it is associated with existing products."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
         return super().destroy(request, *args, **kwargs)
     
     
@@ -64,7 +71,7 @@ class BrandViewSet(ModelViewSet):
     permission_classes = [permissions.IsAdminOrReadOnly]
     pagination_class = CustomPageNumberPagination
     # queryset = models.Brand.objects.annotate(products_count=Count('tyres'))
-    queryset = models.Brand.objects.prefetch_related('tyres').annotate(products_count=Count('tyres')).all()
+    queryset = models.Brand.objects.annotate(products_count=Count('tyres')).all()
     serializer_class = serializers.BrandSerializer
     
     
@@ -79,7 +86,10 @@ class CartViewSet(CreateModelMixin, RetrieveModelMixin, DestroyModelMixin,  Gene
                              # )
                   # )
                   # )
-    queryset = models.Cart.objects.prefetch_related('items__product').all()
+    queryset = models.Cart.objects.prefetch_related(
+        'items__product__brand',
+        'items__product__images'
+    ).all()
     serializer_class = serializers.CartSerializer
     
 class CartItemViewSet(ModelViewSet):
@@ -95,7 +105,13 @@ class CartItemViewSet(ModelViewSet):
         return {'cart_id' : self.kwargs['cart_pk']}
     
     def get_queryset(self):
-        return models.CartItem.objects.filter(cart_id=self.kwargs['cart_pk']).select_related('product')
+        return models.CartItem.objects.filter(
+            cart_id=self.kwargs['cart_pk']
+        ).select_related(
+            'product__brand'
+        ).prefetch_related(
+            'product__images'
+        )
 
 class ProductImageViewSet(ModelViewSet):
     def get_queryset(self):

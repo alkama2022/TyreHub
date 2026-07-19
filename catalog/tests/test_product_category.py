@@ -36,7 +36,7 @@ class TestProductCategory:
 
         response = client.post(url, {"title": "Tyres"})
 
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
     def test_retrieve_category(self):
         ...

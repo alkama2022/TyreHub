@@ -8,12 +8,12 @@ from .models import (
     ProductCategory,
     Product,
     ProductImage,
-    Customer,
-    Order,
+    # Customer,
+    # Order,
     OrderItem,
     Address,
-    Cart,
-    CartItem,
+    # Cart,
+    # CartItem,
     Review,
 )
 
@@ -46,11 +46,11 @@ class OrderItemInline(admin.TabularInline):
     readonly_fields = ["unit_price"]
 
 
-class CartItemInline(admin.TabularInline):
-    model = CartItem
-    extra = 0
-    fields = ["product", "quantity"]
-    autocomplete_fields = ["product"]
+# class CartItemInline(admin.TabularInline):
+#     model = CartItem
+#     extra = 0
+#     fields = ["product", "quantity"]
+#     autocomplete_fields = ["product"]
 
 
 class AddressInline(admin.StackedInline):
@@ -195,35 +195,35 @@ class ProductImageAdmin(admin.ModelAdmin):
 # Customer / order admin
 # ---------------------------------------------------------------------------
 
-@admin.register(Customer)
-class CustomerAdmin(admin.ModelAdmin):
-    list_display = ["__str__", "membership", "phone_number", "birth_date"]
-    list_filter = ["membership"]
-    search_fields = ["user__first_name", "user__last_name", "user__email", "phone_number"]
-    autocomplete_fields = ["user"]
-    inlines = [AddressInline]
+# @admin.register(Customer)
+# class CustomerAdmin(admin.ModelAdmin):
+#     list_display = ["__str__", "membership", "phone_number", "birth_date"]
+#     list_filter = ["membership"]
+#     search_fields = ["user__first_name", "user__last_name", "user__email", "phone_number"]
+#     autocomplete_fields = ["user"]
+#     inlines = [AddressInline]
 
 
-@admin.register(Order)
-class OrderAdmin(admin.ModelAdmin):
-    list_display = ["id", "customer", "payment_status", "placed_at", "item_count", "order_total"]
-    list_filter = ["payment_status", "placed_at"]
-    search_fields = ["customer__user__first_name", "customer__user__last_name"]
-    autocomplete_fields = ["customer"]
-    inlines = [OrderItemInline]
-    date_hierarchy = "placed_at"
+# @admin.register(Order)
+# class OrderAdmin(admin.ModelAdmin):
+#     list_display = ["id", "customer", "payment_status", "placed_at", "item_count", "order_total"]
+#     list_filter = ["payment_status", "placed_at"]
+#     search_fields = ["customer__user__first_name", "customer__user__last_name"]
+#     autocomplete_fields = ["customer"]
+#     inlines = [OrderItemInline]
+#     date_hierarchy = "placed_at"
 
-    def get_queryset(self, request):
-        return super().get_queryset(request).prefetch_related("items")
+#     def get_queryset(self, request):
+#         return super().get_queryset(request).prefetch_related("items")
 
-    @admin.display(description="Items")
-    def item_count(self, obj):
-        return obj.items.count()
+#     @admin.display(description="Items")
+#     def item_count(self, obj):
+#         return obj.items.count()
 
-    @admin.display(description="Total")
-    def order_total(self, obj):
-        total = sum(item.quantity * item.unit_price for item in obj.items.all())
-        return f"₦{total:,.2f}"
+#     @admin.display(description="Total")
+#     def order_total(self, obj):
+#         total = sum(item.quantity * item.unit_price for item in obj.items.all())
+#         return f"₦{total:,.2f}"
 
 
 @admin.register(OrderItem)
@@ -239,21 +239,21 @@ class AddressAdmin(admin.ModelAdmin):
     autocomplete_fields = ["customer"]
 
 
-@admin.register(Cart)
-class CartAdmin(admin.ModelAdmin):
-    list_display = ["id", "created_at", "item_count"]
-    inlines = [CartItemInline]
-    search_fields = ["id"]
+# @admin.register(Cart)
+# class CartAdmin(admin.ModelAdmin):
+#     list_display = ["id", "created_at", "item_count"]
+#     inlines = [CartItemInline]
+#     search_fields = ["id"]
 
-    @admin.display(description="Items")
-    def item_count(self, obj):
-        return obj.items.count()
+#     @admin.display(description="Items")
+#     def item_count(self, obj):
+#         return obj.items.count()
 
 
-@admin.register(CartItem)
-class CartItemAdmin(admin.ModelAdmin):
-    list_display = ["cart", "product", "quantity"]
-    autocomplete_fields = ["cart", "product"]
+# @admin.register(CartItem)
+# class CartItemAdmin(admin.ModelAdmin):
+#     list_display = ["cart", "product", "quantity"]
+#     autocomplete_fields = ["cart", "product"]
     
 
 

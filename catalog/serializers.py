@@ -8,7 +8,8 @@ class SimpleProductSerializer(serializers.ModelSerializer):
     image = serializers.SerializerMethodField()
 
     def get_image(self, obj):
-        primary = obj.images.filter(is_primary=True).first() or obj.images.first()
+        images = list(obj.images.all())
+        primary = next((img for img in images if img.is_primary), None) or (images[0] if images else None)
         if not primary or not primary.image:
             return None
         request = self.context.get('request')
