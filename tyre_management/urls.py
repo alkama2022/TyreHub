@@ -20,8 +20,11 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    from debug_toolbar.toolbar import debug_toolbar_urls
-    urlpatterns += debug_toolbar_urls()
+    try:
+        from debug_toolbar.toolbar import debug_toolbar_urls
+        urlpatterns += debug_toolbar_urls()
+    except ImportError:
+        pass
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 else:
     # Serve media files in production (or delegate to nginx/S3 in real deployments)

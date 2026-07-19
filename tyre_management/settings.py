@@ -154,7 +154,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "Africa/Lagos"
 
 USE_I18N = True
 
@@ -252,5 +252,9 @@ CORS_ALLOWED_ORIGINS = os.getenv(
 
 # Dynamically activate debug toolbar only during local development
 if DEBUG:
-    INSTALLED_APPS.append('debug_toolbar')
-    MIDDLEWARE.insert(1, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+    try:
+        import debug_toolbar  # noqa: F401
+        INSTALLED_APPS.append('debug_toolbar')
+        MIDDLEWARE.insert(1, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+    except ImportError:
+        pass

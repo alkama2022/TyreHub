@@ -30,8 +30,10 @@ from .models import User
 class RecentAuditLogInline(admin.TabularInline):
     """
     Shows the 10 most recent audit log entries for this user.
-    Imported lazily to avoid circular imports between core ↔ accounts.
     """
+    from accounts.models import AuditLog
+    model = AuditLog
+    fk_name = "actor"
     verbose_name = "Recent Activity"
     verbose_name_plural = "Recent Activity (last 10 entries)"
     extra = 0
@@ -39,8 +41,8 @@ class RecentAuditLogInline(admin.TabularInline):
     can_delete = False       # Audit logs are immutable
 
     def get_queryset(self, request):
-        from accounts.models import AuditLog
-        return AuditLog.objects.filter(actor=self._parent_instance).order_by("-timestamp")[:10]
+        qs = super().get_queryset(request)
+        return qs.order_by("-timestamp")[:10]
 
     def get_fields(self, request, obj=None):
         return ("timestamp", "action_display", "description", "ip_address")
@@ -50,12 +52,6 @@ class RecentAuditLogInline(admin.TabularInline):
 
     def has_change_permission(self, request, obj=None):
         return False
-
-    # We need to bind the inline to AuditLog model lazily
-    @property
-    def model(self):
-        from accounts.models import AuditLog
-        return AuditLog
 
     readonly_fields = ("timestamp", "action_display", "description", "ip_address")
 
@@ -339,7 +335,7 @@ class CustomUserAdmin(UserAdmin):
     def role_badge(self, obj):
         """Visual role badge based on Django permissions/groups."""
         if obj.is_superuser:
-            return format_html(
+            return mark_safe(
                 '<span style="background:#6f42c1; color:white; padding:2px 8px; '
                 'border-radius:10px; font-size:11px; font-weight:600;">👑 Super Admin</span>'
             )
@@ -359,11 +355,11 @@ class CustomUserAdmin(UserAdmin):
                     colour,
                     group_name,
                 )
-            return format_html(
+            return mark_safe(
                 '<span style="background:#0d6efd; color:white; padding:2px 8px; '
                 'border-radius:10px; font-size:11px; font-weight:600;">🛠 Staff</span>'
             )
-        return format_html(
+        return mark_safe(
             '<span style="background:#e9ecef; color:#495057; padding:2px 8px; '
             'border-radius:10px; font-size:11px;">👤 Customer</span>'
         )
@@ -371,10 +367,10 @@ class CustomUserAdmin(UserAdmin):
     @admin.display(description="Active", boolean=False, ordering="is_active")
     def is_active_badge(self, obj):
         if obj.is_active:
-            return format_html(
+            return mark_safe(
                 '<span style="color:#28a745; font-size:16px;" title="Active">●</span>'
             )
-        return format_html(
+        return mark_safe(
             '<span style="color:#dc3545; font-size:16px;" title="Inactive">●</span>'
         )
 
@@ -388,7 +384,7 @@ class CustomUserAdmin(UserAdmin):
     def last_login_display(self, obj):
         if obj.last_login:
             return obj.last_login.strftime("%d %b %Y %H:%M")
-        return format_html('<span style="color:#adb5bd;">Never</span>')
+        return mark_safe('<span style="color:#adb5bd;">Never</span>')
 
     @admin.display(description="Avatar Preview")
     def avatar_preview(self, obj):

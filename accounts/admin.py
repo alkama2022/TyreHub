@@ -64,7 +64,7 @@ class AuditLogAdmin(admin.ModelAdmin):
         "ip_address",
     )
 
-    date_hierarchy = "timestamp"
+    # date_hierarchy = "timestamp"
 
     ordering = ("-timestamp",)
 

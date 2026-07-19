@@ -83,8 +83,8 @@ class Product(models.Model):
     # class Meta:
     #     unique_together = ("brand", "model_name","tire_size")
 
-    # def __str__(self):
-    #     return f"{self.brand.name} {self.model_name} {self.width}/{self.aspect_ratio}R{self.rim_diameter}"
+    def __str__(self):
+        return f"{self.brand.name} {self.model_name}"
 
     # def clean(self):
     #     """Business rule validation"""

@@ -186,7 +186,6 @@ class ProductAdmin(admin.ModelAdmin):
     list_select_related = ("brand", "category")  # Prevents N+1 queries on foreign keys
     show_full_result_count = False               # Critical for scalability (100k+ rows) prevents slow COUNT(*)
     list_per_page = 50
-    date_hierarchy = "created_at"
     
     actions = [make_active, make_inactive, export_to_csv]
 
@@ -262,7 +261,7 @@ class ProductAdmin(admin.ModelAdmin):
                 )
                 return mark_safe(img_html + actions_html)
         
-        no_img = format_html('<span style="color: #999; font-size: 11px; display: block; margin-bottom: 4px;">No Image</span>')
+        no_img = mark_safe('<span style="color: #999; font-size: 11px; display: block; margin-bottom: 4px;">No Image</span>')
         return mark_safe(no_img + actions_html)
 
 
@@ -331,7 +330,6 @@ class ReviewAdmin(admin.ModelAdmin):
     list_select_related = ("product", "product__brand")
     list_per_page = 50
     show_full_result_count = False
-    date_hierarchy = "date"
 
     @admin.display(description="Date Reviewed", ordering="date")
     def date_formatted(self, obj):

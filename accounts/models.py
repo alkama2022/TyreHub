@@ -115,9 +115,6 @@ class AuditLog(models.Model):
 
     def __str__(self):
         actor = self.actor_username or "Anonymous"
-        return f"[{self.timestamp:%Y-%m-%d %H:%M}] {actor} — {self.get_action_display()}: {self.description[:60]}"
-    def __str__(self):
-        actor = self.actor_username or "Anonymous"
         local_time = timezone.localtime(self.timestamp)
         return (
         f"[{local_time:%Y-%m-%d %H:%M}] "
