@@ -74,7 +74,7 @@ INSTALLED_APPS = [
 # =========================
 
 MIDDLEWARE = [
-
+    
     "corsheaders.middleware.CorsMiddleware",
 
     "django.middleware.security.SecurityMiddleware",
@@ -349,13 +349,25 @@ DEFAULT_FROM_EMAIL = os.getenv(
 # =========================
 
 
+# CORS_ALLOWED_ORIGINS = os.getenv(
+#     "CORS_ALLOWED_ORIGINS",
+#     "http://localhost:5173"
+# ).split(",")
+
+# =========================
+# CORS
+# =========================
+
 CORS_ALLOWED_ORIGINS = os.getenv(
     "CORS_ALLOWED_ORIGINS",
     "http://localhost:5173"
 ).split(",")
 
 
-
+CSRF_TRUSTED_ORIGINS = [
+    "https://alkama-sage.vercel.app",
+    "https://tyrehub.onrender.com",
+]
 # =========================
 # PRODUCTION SECURITY
 # =========================
@@ -374,7 +386,6 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 
     SECURE_HSTS_PRELOAD = True
-
 
 
 
