@@ -60,6 +60,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    
     'corsheaders.middleware.CorsMiddleware',  # ← must be at the TOP
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -251,10 +252,10 @@ CORS_ALLOWED_ORIGINS = os.getenv(
 ).split(",")
 
 # Dynamically activate debug toolbar only during local development
-if DEBUG:
-    try:
-        import debug_toolbar  # noqa: F401
-        INSTALLED_APPS.append('debug_toolbar')
-        MIDDLEWARE.insert(1, 'debug_toolbar.middleware.DebugToolbarMiddleware')
-    except ImportError:
-        pass
+# if DEBUG:
+#     try:
+#         # import debug_toolbar  # noqa: F401
+#         INSTALLED_APPS.append('debug_toolbar')
+#         MIDDLEWARE.insert(1, 'debug_toolbar.middleware.DebugToolbarMiddleware')
+#     except ImportError:
+#         pass
