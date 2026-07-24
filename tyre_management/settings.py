@@ -37,7 +37,7 @@ if not SECRET_KEY:
 
 ALLOWED_HOSTS = os.getenv(
     "ALLOWED_HOSTS",
-    "localhost,127.0.0.1,.onrender.com"
+    "tyrehub.onrender.com,localhost,127.0.0.1"
 ).split(",")
 
 
@@ -374,6 +374,7 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 
     SECURE_HSTS_PRELOAD = True
+
 
 
 
