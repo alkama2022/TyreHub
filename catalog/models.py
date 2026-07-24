@@ -8,7 +8,7 @@ from uuid import uuid4
 
 class Brand(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    logo = models.ImageField(upload_to="tire/brands", blank=True, null=True)
+    logo = models.ImageField(upload_to="store/brands", blank=True, null=True)
     slug = models.SlugField(unique=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -93,7 +93,7 @@ class Product(models.Model):
 
 class ProductImage(models.Model):
     product = models.ForeignKey(Product,on_delete=models.CASCADE,related_name="images")
-    image = models.ImageField(upload_to="tire/images", blank=True, null=True)
+    image = models.ImageField(upload_to="store/images", blank=True, null=True)
     is_primary = models.BooleanField(default=False)
     def __str__(self):
         return f"Image of {self.product.model_name}"

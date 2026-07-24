@@ -251,9 +251,9 @@ REST_FRAMEWORK = {
 
     "DEFAULT_THROTTLE_RATES": {
 
-        "anon": "30/min",
+        "anon": "3000/min",
 
-        "user": "300/min",
+        "user": "3000/min",
 
     },
 
@@ -402,7 +402,14 @@ CLOUDINARY_STORAGE = {
 }
 
 
-
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "django.contrib.staticfiles.storage.StaticStaticFilesStorage",
+    },
+}
 
 
 
